@@ -28,7 +28,6 @@ async function handler(
   )
     return res.json({ ok: true });
 
-  console.log("진행");
   const check = await client.total.findFirst({
     where: {
       id: +id,

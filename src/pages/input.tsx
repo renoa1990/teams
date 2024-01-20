@@ -14,7 +14,6 @@ interface swr {
 
 const InputData: NextPage = () => {
   const { data } = useSWR<swr>("/api/input/last-total");
-  console.log(data);
   return (
     <>
       <Head>
