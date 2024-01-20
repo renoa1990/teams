@@ -1,20 +1,7 @@
-import {
-  ChangeEvent,
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useState,
-} from "react";
-import {
-  Box,
-  Button,
-  InputAdornment,
-  TextField,
-  Typography,
-} from "@mui/material";
-import Tabs, { tabsClasses } from "@mui/material/Tabs";
+import { ChangeEvent, useState } from "react";
+import { Typography } from "@mui/material";
+import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
-import Link from "next/link";
 import { useRouter } from "next/router";
 
 const tabData = [
