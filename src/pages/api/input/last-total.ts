@@ -16,11 +16,12 @@ async function handler(
       confirm: true,
     },
   });
-
   if (lastMoney?.confirm) {
     res.json({ ok: true, lastTotal: lastMoney ? lastMoney.todayTotal : 0 });
-  } else {
+  } else if (!lastMoney?.confirm === false) {
     res.json({ ok: true, nothing: true });
+  } else {
+    res.json({ ok: true, lastTotal: 0 });
   }
 }
 export default withAipSession(

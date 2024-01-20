@@ -29,7 +29,7 @@ const InputData: NextPage = () => {
         }}
       >
         <Container maxWidth="lg">
-          {data && !data.nothing && (
+          {data && data.lastTotal !== undefined && (
             <InputForm yesterdayTotal={data.lastTotal} />
           )}
           {data && data.nothing && (
