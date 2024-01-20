@@ -4,8 +4,26 @@ import { Box, Card, Container, Typography } from "@mui/material";
 import { LoginForm } from "@components/login-form";
 import Main from "@components/layout/layout-main";
 import { InputForm } from "@components/input/input-form";
+import useSWR from "swr";
+import { useRouter } from "next/router";
+import { EditForm } from "@components/edit/edit-form";
+import { deposit, total, withdraw } from "@prisma/client";
 
-const InputData: NextPage = (Props) => {
+interface swr {
+  ok: boolean;
+  data: another;
+  nothing?: boolean;
+}
+
+interface another extends total {
+  deposit: deposit[];
+  withdraw: withdraw[];
+}
+
+const InputData: NextPage = () => {
+  const router = useRouter();
+  const { id } = router.query;
+  const { data, mutate } = useSWR<swr>(`/api/edit/${id}`);
   return (
     <>
       <Head>
@@ -21,7 +39,9 @@ const InputData: NextPage = (Props) => {
         }}
       >
         <Container maxWidth="lg">
-          <InputForm />
+          {data && data.data && (
+            <EditForm editData={data.data} mutate={mutate} />
+          )}
         </Container>
       </Box>
     </>

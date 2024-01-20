@@ -1,14 +1,7 @@
-import {
-  ChangeEvent,
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useState,
-} from "react";
+import { FC, useEffect, useState } from "react";
 import {
   Box,
   Button,
-  InputAdornment,
   TextField,
   Typography,
   useMediaQuery,
@@ -16,7 +9,6 @@ import {
   Theme,
 } from "@mui/material";
 import { NumericFormat } from "react-number-format";
-import { useForm, Controller } from "react-hook-form";
 import { PropertyList } from "@components/property-list";
 import { PropertyListItem } from "@components/property-list-item";
 import numeral from "numeral";
@@ -29,21 +21,33 @@ import {
   TableRow,
   Paper,
 } from "@mui/material";
+import useMutation from "@libs/useMutation";
+import { DatePicker } from "@mui/x-date-pickers";
+import { useRouter } from "next/router";
 
 interface receipt {
   memo: string;
   price: number;
 }
+interface props {
+  yesterdayTotal: number;
+}
 
-export const InputForm = () => {
+export const InputForm: FC<props> = (props) => {
+  const { yesterdayTotal } = props;
+  const router = useRouter();
   const smDown = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"));
   const align = smDown ? "vertical" : "horizontal";
+  const now = new Date();
+  now.setHours(now.getHours() - 5);
+  const koreaTime = new Date(now.getTime() + 9 * 60 * 60 * 1000); // UTC+9
+
   const [total, setTotal] = useState<number | undefined>(0);
   const [confirmTotal, setConFirmTotal] = useState<{
     memo: string;
     price: number;
   }>();
-
+  const [date, setDate] = useState<string | null>(koreaTime.toDateString());
   const [money, setMoney] = useState<number | undefined>(0);
   const [confirmMoney, setConFirmMoney] = useState<{
     memo: string;
@@ -55,7 +59,10 @@ export const InputForm = () => {
   const [deposit, setDeposit] = useState<number | undefined>(0);
   const [depositMemo, setDepositMemo] = useState<string>("");
 
-  const [receipt, setReceipt] = useState<receipt[]>([]);
+  const [withdrawReceipt, setWithdrawReceipt] = useState<receipt[]>([]);
+  const [depositReceipt, setDepositReceipt] = useState<receipt[]>([]);
+
+  const [marginTotal, setMarginTotal] = useState(0);
 
   const inputTotal = (price?: number) => {
     if (price === undefined) return;
@@ -70,54 +77,117 @@ export const InputForm = () => {
   const inputButton = (type: string) => {
     if (type === "withdraw") {
       if (!withdraw || !withdRowMemo) return;
-      setReceipt([...receipt, { memo: withdRowMemo, price: withdraw * -1 }]);
+      setWithdrawReceipt([
+        ...withdrawReceipt,
+        { memo: withdRowMemo, price: withdraw * -1 },
+      ]);
       setWithdRowMemo("");
       setWithdraw(0);
     }
     if (type === "deposit") {
       if (!deposit || !depositMemo) return;
-      setReceipt([...receipt, { memo: depositMemo, price: deposit }]);
+      setDepositReceipt([
+        ...depositReceipt,
+        { memo: depositMemo, price: deposit },
+      ]);
       setDepositMemo("");
       setDeposit(0);
     }
   };
   const removeItemAtIndex = (index: number) => {
-    setReceipt((currentReceipt) => {
+    setWithdrawReceipt((currentReceipt) => {
       return currentReceipt.filter((item, idx) => idx !== index);
     });
   };
-
-  // const yesterdayTotal = 23220000;
-  const [yesterdayTotal, setYesterdayTotal] = useState(0);
-  const totalWithdraw = receipt.reduce((total, item) => {
+  const removeDepositItemAtIndex = (index: number) => {
+    setDepositReceipt((currentReceipt) => {
+      return currentReceipt.filter((item, idx) => idx !== index);
+    });
+  };
+  const totalWithdraw = withdrawReceipt.reduce((total, item) => {
     return total + item.price;
   }, 0); // 초기값 0으로 시작
+
+  const totalDeposit = depositReceipt.reduce((total, item) => {
+    return total + item.price;
+  }, 0); // 초기값 0으로 시작
+
+  const [create, { data, loading, error }] = useMutation("/api/input");
+
+  useEffect(() => {
+    if (confirmTotal?.memo && confirmMoney?.memo) {
+      setMarginTotal(
+        (yesterdayTotal -
+          confirmMoney.price +
+          confirmTotal?.price +
+          totalWithdraw +
+          totalDeposit) *
+          -1
+      );
+    }
+  }, [yesterdayTotal, confirmMoney, confirmTotal, totalWithdraw, totalDeposit]);
+  const onSubmit = () => {
+    if (loading) return;
+    if (!confirmMoney?.memo) return alert("현잔고를 입력하세요");
+    if (!confirmTotal?.memo) return alert("입출 손익을 입력하세요");
+
+    const isConfirmed = window.confirm("저장 하시겠습니까?");
+
+    if (isConfirmed) {
+      create({
+        yesterdayTotal,
+        confirmMoney,
+        withdrawReceipt,
+        confirmTotal,
+        marginTotal,
+        date,
+        depositReceipt,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (data) {
+      if (data.ok) {
+        if (data.create) {
+          alert("정산입력이 완료되었습니다.");
+
+          router.push("/result");
+        } else {
+          if (data.message) {
+            alert(`${data.message}`);
+          }
+        }
+      }
+    }
+  }, [data]);
 
   return (
     <Box sx={{ display: "flex", width: "100%", mt: 5 }}>
       <Grid container>
         <Grid item md={6} xs={12}>
           <PropertyList>
-            <PropertyListItem align={align} label="·어제 잔고">
+            <PropertyListItem align={align} label="·정산 날짜">
               <Box display={"flex"}>
-                <NumericFormat
-                  customInput={TextField}
-                  thousandSeparator={true}
-                  variant="outlined"
-                  fullWidth
-                  value={yesterdayTotal}
-                  onValueChange={(v) => {
-                    setYesterdayTotal(v.floatValue ? v.floatValue : 0);
+                <DatePicker
+                  onChange={(newDate: Date | null) =>
+                    newDate && setDate(newDate.toLocaleDateString())
+                  }
+                  slotProps={{
+                    textField: {
+                      size: "small",
+                      InputProps: {
+                        style: { fontSize: "small", fontWeight: "bold" },
+                      },
+                      sx: { width: "100%" },
+                    },
                   }}
-                  InputLabelProps={{ style: { fontSize: "small" } }}
-                  inputProps={{
-                    maxLength: 15,
-                    style: { fontSize: "small", textAlign: "right" },
-                  }}
-                  size={"small"}
+                  value={date ? new Date(date) : null}
+                  format={"yyyy-MM-dd"}
                 />
               </Box>
             </PropertyListItem>
+
             <PropertyListItem align={align} label="·현 잔고">
               <Box display={"flex"}>
                 <NumericFormat
@@ -316,6 +386,7 @@ export const InputForm = () => {
                       fontSize={"small"}
                       color={"error"}
                       fontWeight={"bold"}
+                      m={0}
                     >
                       현 잔고
                     </Typography>
@@ -343,6 +414,8 @@ export const InputForm = () => {
                           onClick={() =>
                             setConFirmMoney({ memo: "", price: 0 })
                           }
+                          sx={{ py: 0 }}
+                          size="small"
                         >
                           삭제
                         </Button>
@@ -379,6 +452,7 @@ export const InputForm = () => {
                           onClick={() =>
                             setConFirmTotal({ memo: "", price: 0 })
                           }
+                          sx={{ py: 0 }}
                         >
                           삭제
                         </Button>
@@ -387,17 +461,19 @@ export const InputForm = () => {
                   </TableCell>
                 </TableRow>
 
-                {receipt.map((item, index) => {
+                {withdrawReceipt.map((item, index) => {
                   return (
                     <TableRow key={index}>
                       <TableCell>
-                        <Typography
-                          fontSize={"small"}
-                          color={item.price < 0 ? "error" : ""}
-                          fontWeight={"bold"}
-                        >
-                          {index + 1}. {item.memo}
-                        </Typography>
+                        <Box display={"flex"}>
+                          <Typography
+                            fontSize={"small"}
+                            color={item.price < 0 ? "error" : ""}
+                            fontWeight={"bold"}
+                          >
+                            출금{index + 1}. {item.memo}
+                          </Typography>
+                        </Box>
                       </TableCell>
                       <TableCell>
                         <Box
@@ -417,6 +493,48 @@ export const InputForm = () => {
                             onClick={() => {
                               removeItemAtIndex(index);
                             }}
+                            sx={{ py: 0 }}
+                          >
+                            삭제
+                          </Button>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {depositReceipt.map((item, index) => {
+                  return (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <Box display={"flex"}>
+                          <Typography
+                            fontSize={"small"}
+                            color={item.price < 0 ? "error" : ""}
+                            fontWeight={"bold"}
+                          >
+                            입금{index + 1}. {item.memo}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Box
+                          display={"flex"}
+                          alignItems={"center"}
+                          justifyContent={"flex-end"}
+                        >
+                          <Typography
+                            color={item.price < 0 ? "error" : ""}
+                            fontWeight={"bold"}
+                            fontSize={"small"}
+                          >
+                            {numeral(item?.price).format(`0,0`)}
+                          </Typography>
+                          <Button
+                            color="error"
+                            onClick={() => {
+                              removeDepositItemAtIndex(index);
+                            }}
+                            sx={{ py: 0 }}
                           >
                             삭제
                           </Button>
@@ -437,28 +555,9 @@ export const InputForm = () => {
                     >
                       <Typography
                         fontWeight={"bold"}
-                        color={
-                          confirmMoney?.memo &&
-                          confirmTotal?.memo &&
-                          (yesterdayTotal -
-                            confirmMoney.price +
-                            confirmTotal?.price +
-                            totalWithdraw) *
-                            -1 <
-                            0
-                            ? "error"
-                            : ""
-                        }
+                        color={marginTotal < 0 ? "error" : ""}
                       >
-                        {numeral(
-                          confirmTotal?.memo && confirmMoney?.memo
-                            ? (yesterdayTotal -
-                                confirmMoney.price +
-                                confirmTotal?.price +
-                                totalWithdraw) *
-                                -1
-                            : 0
-                        ).format(`0,0`)}
+                        {numeral(marginTotal).format(`0,0`)}
                       </Typography>
                     </Box>
                   </TableCell>
@@ -469,7 +568,12 @@ export const InputForm = () => {
           <Typography fontSize={"small"} align="right" sx={{ m: 1 }}>
             ※ 금액이 - 인 경우 정산금액보다 부족함
           </Typography>
-          <Button fullWidth variant="contained">
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={onSubmit}
+            disabled={loading}
+          >
             <Typography fontSize={"small"} fontWeight={"bold"}>
               정산완료
             </Typography>

@@ -19,13 +19,17 @@ import { useRouter } from "next/router";
 
 const tabData = [
   { name: "정산입력", src: "/input" },
-  { name: "정산수정", src: "/edit" },
   { name: "정산확인", src: "/result" },
 ];
 
 export const TabBar = () => {
-  const [tabValue, setTabValue] = useState(0);
   const router = useRouter();
+  const [tabValue, setTabValue] = useState(
+    tabData.findIndex((item) => item.src === router.pathname) < 0
+      ? 1
+      : tabData.findIndex((item) => item.src === router.pathname)
+  );
+
   const handleChange = (event: ChangeEvent<{}>, newValue: number) => {
     setTabValue(newValue);
   };

@@ -14,3 +14,36 @@ model user {
   password String
   level    String
 }
+
+model total {
+  id             Int        @id @default(autoincrement())
+  totalAt        DateTime
+  createAt       DateTime
+  yesterDayTotal Int //전일 잔고
+  todayTotal     Int //오늘 잔고
+  solutionTotal  Int //입출 손익
+  marginTotla    Int
+  withdraw       withdraw[]
+  deposit        deposit[]
+  confirm        Boolean    @default(false)
+}
+
+model withdraw {
+  id      Int    @id @default(autoincrement())
+  memo    String @default("")
+  price   Int
+  total   total? @relation(fields: [totalId], references: [id])
+  totalId Int?
+
+  @@index([totalId])
+}
+
+model deposit {
+  id      Int    @id @default(autoincrement())
+  memo    String @default("")
+  price   Int
+  total   total? @relation(fields: [totalId], references: [id])
+  totalId Int?
+
+  @@index([totalId])
+}

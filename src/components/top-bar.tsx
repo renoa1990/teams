@@ -50,7 +50,6 @@ export const Topbar = ({
         team logo
       </Box>
       <Box sx={{ display: { xs: "none", md: "flex" } }} alignItems={"center"}>
-        ff
         {/* <Box>
           <NavItem
             title={"Landings"}

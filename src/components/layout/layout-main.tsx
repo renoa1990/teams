@@ -4,7 +4,6 @@ import Divider from "@mui/material/Divider";
 import useScrollTrigger from "@mui/material/useScrollTrigger";
 import Container from "@components/container";
 import Topbar from "./Topbar";
-import Footer from "./Footer";
 import { TabBar } from "@components/tabs";
 
 interface Props {
@@ -31,10 +30,6 @@ const Main = ({ children, colorInvert = false }: Props): JSX.Element => {
         {children}
         <Divider />
       </main>
-
-      <Container paddingY={4}>
-        <Footer />
-      </Container>
     </Box>
   );
 };
