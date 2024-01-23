@@ -1,12 +1,12 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import { Box, Card, Container, Typography } from "@mui/material";
+import { Box, Card, Container, Tab, Tabs, Typography } from "@mui/material";
 import { LoginForm } from "@components/login-form";
 import Main from "@components/layout/layout-main";
 import { InputForm } from "@components/input/input-form";
 import { List } from "@components/list/list";
 import useSWR from "swr";
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { deposit, withdraw } from "@prisma/client";
 
 interface swr {
@@ -28,10 +28,17 @@ interface swr {
     confirm: boolean;
   }[];
 }
-
+const tabData = [
+  { name: "렉스", value: "lexx" },
+  { name: "알파벳", value: "alphabet" },
+];
 const InputData: NextPage = () => {
   const [page, setPage] = useState<number>(0);
-  const { data, mutate } = useSWR<swr>(`/api/list/${page}`);
+  const [tabValue, setTabValue] = useState(0);
+  const { data, mutate } = useSWR<swr>(`/api/list/${tabData[tabValue].value}`);
+  const handleChange = (event: ChangeEvent<{}>, newValue: number) => {
+    setTabValue(newValue);
+  };
   return (
     <>
       <Head>
@@ -46,6 +53,20 @@ const InputData: NextPage = () => {
           minHeight: "100vh",
         }}
       >
+        <Tabs
+          value={tabValue}
+          onChange={handleChange}
+          indicatorColor="primary"
+          textColor="primary"
+          centered
+        >
+          {tabData.map((item, index) => (
+            <Tab
+              key={index}
+              label={<Typography fontWeight={"bold"}>{item.name} </Typography>}
+            />
+          ))}
+        </Tabs>
         <Container maxWidth="lg">
           {data && <List list={data.list} mutate={mutate} />}
         </Container>

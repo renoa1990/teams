@@ -8,10 +8,13 @@ async function handler(
   res: NextApiResponse<ResponseType>
 ) {
   const {
-    query: { page },
+    query: { site },
   } = req;
 
   const list = await client.total.findMany({
+    where: {
+      site: site?.toString(),
+    },
     include: { withdraw: true, deposit: true },
     orderBy: {
       totalAt: "desc",

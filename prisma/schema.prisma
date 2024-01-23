@@ -19,6 +19,7 @@ model total {
   id             Int        @id @default(autoincrement())
   totalAt        DateTime
   createAt       DateTime
+  site           String
   yesterDayTotal Int //전일 잔고
   todayTotal     Int //오늘 잔고
   solutionTotal  Int //입출 손익

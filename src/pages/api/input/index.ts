@@ -16,6 +16,7 @@ async function handler(
       marginTotal,
       date,
       depositReceipt,
+      site,
     },
   } = req;
   if (
@@ -34,6 +35,7 @@ async function handler(
 
   const check = await client.total.findFirst({
     where: {
+      site: site,
       totalAt: dateData,
     },
   });
@@ -55,6 +57,7 @@ async function handler(
   const create = Boolean(
     await client.total.create({
       data: {
+        site: site,
         yesterDayTotal: +yesterdayTotal,
         todayTotal: +confirmMoney.price,
         solutionTotal: +confirmTotal.price,

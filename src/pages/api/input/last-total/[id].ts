@@ -7,7 +7,15 @@ async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ResponseType>
 ) {
+  const {
+    query: { id },
+  } = req;
+
+  if (!id) return;
   const lastMoney = await client.total.findFirst({
+    where: {
+      site: id.toString(),
+    },
     orderBy: {
       totalAt: "desc",
     },

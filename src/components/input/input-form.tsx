@@ -31,23 +31,22 @@ interface receipt {
 }
 interface props {
   yesterdayTotal: number;
+  site: string;
+  mutate: () => void;
 }
 
 export const InputForm: FC<props> = (props) => {
-  const { yesterdayTotal } = props;
+  const { yesterdayTotal, site, mutate } = props;
   const router = useRouter();
   const smDown = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"));
   const align = smDown ? "vertical" : "horizontal";
-  const now = new Date();
-  now.setHours(now.getHours() - 5);
-  const koreaTime = new Date(now.getTime() + 9 * 60 * 60 * 1000); // UTC+9
 
   const [total, setTotal] = useState<number | undefined>(0);
   const [confirmTotal, setConFirmTotal] = useState<{
     memo: string;
     price: number;
   }>();
-  const [date, setDate] = useState<string | null>(koreaTime.toDateString());
+  const [date, setDate] = useState<string | null>(null);
   const [money, setMoney] = useState<number | undefined>(0);
   const [confirmMoney, setConFirmMoney] = useState<{
     memo: string;
@@ -130,7 +129,7 @@ export const InputForm: FC<props> = (props) => {
     if (loading) return;
     if (!confirmMoney?.memo) return alert("현잔고를 입력하세요");
     if (!confirmTotal?.memo) return alert("입출 손익을 입력하세요");
-
+    if (!date) return alert("정산 날짜를 입력하세요");
     const isConfirmed = window.confirm("저장 하시겠습니까?");
 
     if (isConfirmed) {
@@ -142,6 +141,7 @@ export const InputForm: FC<props> = (props) => {
         marginTotal,
         date,
         depositReceipt,
+        site,
       });
     }
   };
@@ -161,6 +161,11 @@ export const InputForm: FC<props> = (props) => {
       }
     }
   }, [data]);
+  useEffect(() => {
+    if (site) {
+      mutate();
+    }
+  }, [site]);
 
   return (
     <Box sx={{ display: "flex", width: "100%", mt: 5 }}>

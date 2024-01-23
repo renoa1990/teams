@@ -42,15 +42,6 @@ const Topbar = ({ colorInvert = false }: Props): JSX.Element => {
         /> */}
         teamlx
       </Box>
-
-      <Box sx={{ display: "flex" }} alignItems={"center"}>
-        <Box display={router.pathname === "/" ? "flex" : "none"}>
-          <SearchIcon fontSize="small" />
-        </Box>
-        <Box marginLeft={2}>
-          <ThemeModeToggler />
-        </Box>
-      </Box>
     </Box>
   );
 };
