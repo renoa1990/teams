@@ -163,6 +163,12 @@ export const InputForm: FC<props> = (props) => {
   }, [data]);
   useEffect(() => {
     if (site) {
+      setConFirmMoney({ memo: "", price: 0 });
+      setConFirmTotal({ memo: "", price: 0 });
+      setWithdrawReceipt([]);
+      setDepositReceipt([]);
+      setDate(null);
+
       mutate();
     }
   }, [site]);
