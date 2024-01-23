@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import useScrollTrigger from "@mui/material/useScrollTrigger";
 import Container from "@components/container";
 import Topbar from "./Topbar";
-import { Typography } from "@mui/material";
+import { Button, Typography } from "@mui/material";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import useMutation from "@libs/useMutation";
+import authGuard from "@libs/authGuard";
 
 interface Props {
   children: React.ReactNode;
@@ -19,10 +21,41 @@ const menu = [
 ];
 const Main = ({ children, colorInvert = false }: Props): JSX.Element => {
   const router = useRouter();
+  authGuard();
+
+  const [logout, { data, loading }] = useMutation("/api/user/logout");
+
+  useEffect(() => {
+    if (data && data.ok) {
+      if (data.logout) {
+        router.push("/");
+      }
+    }
+  }, [data]);
 
   return (
     <Box>
       <Container paddingY={1}>
+        <Box
+          width={"100%"}
+          height={20}
+          display={"flex"}
+          justifyContent={"flex-end"}
+          alignItems={"center"}
+          my={1}
+        >
+          <Button
+            variant="outlined"
+            size="small"
+            sx={{ py: 0.5 }}
+            color="error"
+            onClick={() => logout({})}
+          >
+            <Typography fontSize={"small"} fontWeight={"bold"}>
+              로그아웃
+            </Typography>
+          </Button>
+        </Box>
         <Box
           width={"100%"}
           height={40}

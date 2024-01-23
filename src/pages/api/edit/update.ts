@@ -94,6 +94,5 @@ export default withAipSession(
   withHandler({
     methods: ["POST"],
     handler,
-    isPrivate: false,
   })
 );

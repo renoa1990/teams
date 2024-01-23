@@ -1,8 +1,15 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import { Box, Card, Container, Typography } from "@mui/material";
-import { LoginForm } from "@components/login-form";
-
+import { LoginForm } from "@components/login/login-form";
+import { withSsrSession } from "@libs/server/withSession";
+import { IncomingMessage } from "http";
+import { ServerResponse } from "http";
+import client from "@libs/client";
+interface serverside {
+  req?: IncomingMessage;
+  res?: ServerResponse;
+}
 const Login: NextPage = (Props) => {
   return (
     <>
@@ -46,7 +53,7 @@ const Login: NextPage = (Props) => {
             >
               <LoginForm {...Props} />
             </Box>
-          </Card>{" "}
+          </Card>
         </Container>
       </Box>
     </>
@@ -56,3 +63,33 @@ const Page: NextPage = () => {
   return <Login />;
 };
 export default Page;
+
+export const getServerSideProps = withSsrSession(async function ({
+  req,
+  res,
+}: serverside) {
+  const user = req?.session.user;
+
+  if (user) {
+    const me = await client.user.findFirst({
+      where: {
+        id: user?.id,
+        userId: user.userId,
+        level: user.level,
+      },
+    });
+    if (me) {
+      return {
+        redirect: {
+          destination: "/input",
+        },
+      };
+    } else {
+      req.session.destroy();
+    }
+  }
+
+  return {
+    props: {},
+  };
+});

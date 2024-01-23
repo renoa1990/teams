@@ -1,14 +1,20 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import { Box, Card, Container, Tab, Tabs, Typography } from "@mui/material";
-import { LoginForm } from "@components/login-form";
 import Main from "@components/layout/layout-main";
 import { InputForm } from "@components/input/input-form";
 import { List } from "@components/list/list";
 import useSWR from "swr";
 import { ChangeEvent, useState } from "react";
 import { deposit, withdraw } from "@prisma/client";
-
+import { withSsrSession } from "@libs/server/withSession";
+import { IncomingMessage } from "http";
+import { ServerResponse } from "http";
+import client from "@libs/client";
+interface serverside {
+  req?: IncomingMessage;
+  res?: ServerResponse;
+}
 interface swr {
   ok: boolean;
   list: {
@@ -82,3 +88,38 @@ const Page: NextPage = () => {
   );
 };
 export default Page;
+
+export const getServerSideProps = withSsrSession(async function ({
+  req,
+  res,
+}: serverside) {
+  const user = req?.session.user;
+
+  if (user) {
+    const me = await client.user.findFirst({
+      where: {
+        id: user?.id,
+        userId: user.userId,
+        level: user.level,
+      },
+    });
+    if (!me) {
+      req.session.destroy();
+      return {
+        redirect: {
+          destination: "/",
+        },
+      };
+    }
+  } else {
+    return {
+      redirect: {
+        destination: "/",
+      },
+    };
+  }
+
+  return {
+    props: {},
+  };
+});

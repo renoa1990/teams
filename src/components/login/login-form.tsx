@@ -27,22 +27,13 @@ export const LoginForm: FC = () => {
   useEffect(() => {
     if (data) {
       if (data.ok) {
-        if (data.userIdCheck || !data.passwordCheck) {
-          enqueueSnackbar("아이디 또는 패스워드가 유효하지 않습니다", {
-            variant: "error",
-          });
-          return;
-        } else {
-          enqueueSnackbar("환영합니다", {
-            variant: "success",
-          });
-          router.push("/withdraw");
+        if (data.login) {
+          router.push("/input");
+        } else if (data.message) {
+          alert(`${data.message}`);
         }
       } else {
-        enqueueSnackbar("로그인할수 없습니다", {
-          variant: "error",
-        });
-        return;
+        alert(`${data.message}`);
       }
     }
   }, [data]);

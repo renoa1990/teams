@@ -9,8 +9,12 @@ async function handler(
 ) {
   const {
     body: { id },
+    session: { user },
   } = req;
   if (!id) return res.json({ ok: true });
+
+  if (user?.level !== "1")
+    return res.json({ ok: true, message: "관리자만 처리할수 있습니다." });
 
   const check = await client.total.findFirst({
     where: {
@@ -37,6 +41,5 @@ export default withAipSession(
   withHandler({
     methods: ["POST"],
     handler,
-    isPrivate: false,
   })
 );

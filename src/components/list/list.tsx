@@ -50,10 +50,11 @@ export const List: FC<props> = (props) => {
     if (data) {
       if (data.ok) {
         if (data.confirm) {
-          //정산완료
-
-          mutate();
         }
+        if (data.message) {
+          alert(`${data.message}`);
+        }
+        mutate();
       }
     }
   }, [data]);

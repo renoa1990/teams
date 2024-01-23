@@ -3,19 +3,13 @@ import { withIronSessionApiRoute, withIronSessionSsr } from "iron-session/next";
 const cookieConfig = {
   cookieName: "TeamLX",
   password: process.env.COOKIE_PASSWORD!,
-  cookieOptions: {
-    maxAge: undefined,
-  },
 };
 declare module "iron-session" {
   interface IronSessionData {
     user?: {
       id: number;
       userId: string;
-      role: string;
-      lv: string;
-      TTXD: string;
-      nickName: string;
+      level: string;
     };
   }
 }

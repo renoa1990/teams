@@ -30,6 +30,5 @@ export default withAipSession(
   withHandler({
     methods: ["GET"],
     handler,
-    isPrivate: false,
   })
 );

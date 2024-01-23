@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next/types";
 import withHandler, { ResponseType } from "@libs/server/withHandler";
 import { withAipSession } from "@libs/server/withSession";
 import client from "@libs/client";
+import pwencoder from "@libs/server/pwencoder";
 
 async function handler(
   req: NextApiRequest,
@@ -36,6 +37,5 @@ export default withAipSession(
   withHandler({
     methods: ["GET"],
     handler,
-    isPrivate: false,
   })
 );
