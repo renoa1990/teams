@@ -30,12 +30,8 @@ async function handler(
     return res.json({ ok: true });
 
   const now = new Date();
-  const dateDatas = new Date(date);
-
-  console.log("들어온값", date);
-  console.log("변환값", dateDatas);
-  const dateData = new Date(dateDatas.getTime() - 12 * 3600000);
-  console.log("재변환값", dateDatas);
+  const dateData = new Date(date);
+  dateData.setHours(14);
 
   const check = await client.total.findFirst({
     where: {
