@@ -37,7 +37,7 @@ const Main = ({ children, colorInvert = false }: Props): JSX.Element => {
                 style={{ textDecoration: "none" }}
                 key={i.name}
               >
-                <Box mx={1}>
+                <Box mx={2}>
                   <Typography
                     fontWeight={router.pathname === i.src ? "bold" : ""}
                     variant="h6"

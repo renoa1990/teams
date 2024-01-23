@@ -90,6 +90,11 @@ export const List: FC<props> = (props) => {
               </TableCell>
               <TableCell align="center">
                 <Typography fontSize={"small"} fontWeight={"bold"}>
+                  처리일
+                </Typography>
+              </TableCell>
+              <TableCell align="center">
+                <Typography fontSize={"small"} fontWeight={"bold"}>
                   잔고총액
                 </Typography>
               </TableCell>
@@ -218,6 +223,11 @@ export const List: FC<props> = (props) => {
                         color={item.marginTotla < 0 ? "error" : ""}
                       >
                         {numeral(item.marginTotla).format("0,0")}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography fontSize={"small"} fontWeight={"bold"}>
+                        {moment(item.createAt).format("YYYY-MM-DD (ddd)")}
                       </Typography>
                     </TableCell>
                     <TableCell align="center">
