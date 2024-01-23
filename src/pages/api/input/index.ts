@@ -29,11 +29,8 @@ async function handler(
     return res.json({ ok: true });
 
   const now = new Date();
-  console.log("지금", now);
-  const dateData = new Date(date);
-  console.log("계산", dateData);
-
-  dateData.setUTCHours(23 + 9, 0, 0, 0);
+  const dateDatas = new Date(date);
+  const dateData = new Date(dateDatas.getTime() - 12 * 3600000);
 
   const check = await client.total.findFirst({
     where: {
