@@ -65,7 +65,7 @@ export const InputForm: FC<props> = (props) => {
 
   const inputTotal = (price?: number) => {
     if (price === undefined) return;
-    setConFirmTotal({ memo: "렉스 입출손익", price });
+    setConFirmTotal({ memo: "입출손익", price });
     setTotal(0);
   };
   const inputMoney = (price?: number) => {
@@ -227,7 +227,7 @@ export const InputForm: FC<props> = (props) => {
                 ※ 가상, 뒷장 잔고 총 합
               </Typography>
             </PropertyListItem>
-            <PropertyListItem align={align} label="·렉스 입출손익">
+            <PropertyListItem align={align} label="·입출손익">
               <Box display={"flex"}>
                 <NumericFormat
                   customInput={TextField}
