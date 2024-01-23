@@ -36,7 +36,7 @@ async function handler(
   const check = await client.total.findFirst({
     where: {
       site: site,
-      totalAt: dateData,
+      totalAt: { gte: dateData },
     },
   });
 
@@ -48,10 +48,17 @@ async function handler(
   }
 
   if (check) {
-    return res.json({
-      ok: true,
-      message: "해당 날짜는 이미 완료된 정산이 있습니다.",
-    });
+    if (check.totalAt === dateData) {
+      return res.json({
+        ok: true,
+        message: "해당 날짜에 이미 완료된 정산이 있습니다.",
+      });
+    } else {
+      return res.json({
+        ok: true,
+        message: "선택한 날짜 이후 완료된 정산이 있습니다",
+      });
+    }
   }
 
   const create = Boolean(
