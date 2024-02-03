@@ -1,5 +1,11 @@
-import { FC, Fragment, useEffect } from "react";
-import { Box, Button, Tooltip, Typography } from "@mui/material";
+import { ChangeEvent, FC, Fragment, MouseEvent, useEffect } from "react";
+import {
+  Box,
+  Button,
+  TablePagination,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import numeral from "numeral";
 import moment from "moment";
 import {
@@ -34,10 +40,28 @@ interface props {
     confirm: boolean;
   }[];
   mutate: () => void;
+  listCount: number;
+  onPageChange: (
+    event: MouseEvent<HTMLButtonElement> | null,
+    newPage: number
+  ) => void;
+  onRowsPerPageChange?: (event: ChangeEvent<HTMLInputElement>) => void;
+  page: number;
+  rowsPerPage: number;
+  level: string;
 }
 
 export const List: FC<props> = (props) => {
-  const { list, mutate } = props;
+  const {
+    level,
+    list,
+    mutate,
+    page,
+    rowsPerPage,
+    listCount,
+    onPageChange,
+    onRowsPerPageChange,
+  } = props;
   const [totalConfirm, { data, loading, error }] = useMutation(
     "/api/result/confirm"
   );
@@ -59,7 +83,7 @@ export const List: FC<props> = (props) => {
     }
   }, [data]);
   return (
-    <Box sx={{ display: "flex", width: "100%", mt: 5 }}>
+    <Box sx={{ display: "flex", width: "100%", my: 5 }}>
       <TableContainer component={Paper}>
         <Table aria-label="simple table">
           <TableHead>
@@ -263,19 +287,24 @@ export const List: FC<props> = (props) => {
                             </Button>{" "}
                           </Link>
 
-                          <Button
-                            size="small"
-                            sx={{ p: 0, ml: 1 }}
-                            variant="contained"
-                            color="success"
-                            onClick={() => {
-                              confirm(item.id);
-                            }}
-                          >
-                            <Typography fontSize={"small"} fontWeight={"bold"}>
-                              확정
-                            </Typography>
-                          </Button>
+                          {level === "1" && (
+                            <Button
+                              size="small"
+                              sx={{ p: 0, ml: 1 }}
+                              variant="contained"
+                              color="success"
+                              onClick={() => {
+                                confirm(item.id);
+                              }}
+                            >
+                              <Typography
+                                fontSize={"small"}
+                                fontWeight={"bold"}
+                              >
+                                확정
+                              </Typography>
+                            </Button>
+                          )}
                         </Box>
                       )}
                     </TableCell>
@@ -285,6 +314,15 @@ export const List: FC<props> = (props) => {
             })}
           </TableBody>
         </Table>
+        <TablePagination
+          component="div"
+          count={listCount}
+          onPageChange={onPageChange}
+          onRowsPerPageChange={onRowsPerPageChange}
+          page={listCount <= 0 ? 0 : page}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[10, 20, 30]}
+        />
       </TableContainer>
     </Box>
   );

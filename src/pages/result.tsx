@@ -5,7 +5,7 @@ import Main from "@components/layout/layout-main";
 import { InputForm } from "@components/input/input-form";
 import { List } from "@components/list/list";
 import useSWR from "swr";
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, MouseEvent, useState } from "react";
 import { deposit, withdraw } from "@prisma/client";
 import { withSsrSession } from "@libs/server/withSession";
 import { IncomingMessage } from "http";
@@ -33,18 +33,44 @@ interface swr {
     depositTotal: number;
     confirm: boolean;
   }[];
+  listCount: {
+    _count: number;
+  };
 }
+interface props {
+  level: string;
+}
+
 const tabData = [
   { name: "렉스", value: "lexx" },
   { name: "알파벳", value: "alphabet" },
 ];
-const InputData: NextPage = () => {
+
+const InputData: NextPage<props> = (props) => {
+  const { level } = props;
   const [page, setPage] = useState<number>(0);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(20);
   const [tabValue, setTabValue] = useState(0);
-  const { data, mutate } = useSWR<swr>(`/api/list/${tabData[tabValue].value}`);
+  const { data, mutate } = useSWR<swr>(
+    `/api/list/${tabData[tabValue].value}?rowsPerPage=${rowsPerPage}&page=${page}`
+  );
   const handleChange = (event: ChangeEvent<{}>, newValue: number) => {
     setTabValue(newValue);
   };
+
+  const handlePageChange = (
+    event: MouseEvent<HTMLButtonElement> | null,
+    newPage: number
+  ): void => {
+    setPage(newPage);
+  };
+  const handleRowsPerPageChange = (
+    event: ChangeEvent<HTMLInputElement>
+  ): void => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+  };
+  console.log(level);
+
   return (
     <>
       <Head>
@@ -74,16 +100,27 @@ const InputData: NextPage = () => {
           ))}
         </Tabs>
         <Container maxWidth="lg">
-          {data && <List list={data.list} mutate={mutate} />}
+          {data && (
+            <List
+              level={level}
+              listCount={data?.listCount ? data?.listCount._count : 0}
+              list={data.list}
+              mutate={mutate}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              onPageChange={handlePageChange}
+              onRowsPerPageChange={handleRowsPerPageChange}
+            />
+          )}
         </Container>
       </Box>
     </>
   );
 };
-const Page: NextPage = () => {
+const Page: NextPage<props> = (props) => {
   return (
     <Main>
-      <InputData />
+      <InputData {...props} />
     </Main>
   );
 };
@@ -120,6 +157,6 @@ export const getServerSideProps = withSsrSession(async function ({
   }
 
   return {
-    props: {},
+    props: { level: user?.level },
   };
 });
