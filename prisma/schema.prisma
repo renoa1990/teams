@@ -1,6 +1,5 @@
 datasource db {
-  provider = "postgresql" // MySQL에서 PostgreSQL로 변경
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
 }
 
 generator client {
@@ -19,12 +18,15 @@ model total {
   totalAt        DateTime
   createAt       DateTime
   site           String
-  yesterDayTotal Int // 전일 잔고
-  todayTotal     Int // 오늘 잔고
-  solutionTotal  Int // 입출 손익
+  yesterDayTotal Int
+  todayTotal     Int
+  solutionTotal  Int
+  userHoldings   Int      @default(0)
   marginTotla    Int
   withdraw       withdraw[]
   deposit        deposit[]
+  balance        balance[]
+  lockedBalance  lockedBalance[]
   confirm        Boolean    @default(false)
 }
 
@@ -39,6 +41,26 @@ model withdraw {
 }
 
 model deposit {
+  id      Int    @id @default(autoincrement())
+  memo    String @default("")
+  price   Int
+  total   total? @relation(fields: [totalId], references: [id])
+  totalId Int?
+
+  @@index([totalId])
+}
+
+model balance {
+  id      Int    @id @default(autoincrement())
+  memo    String @default("")
+  price   Int
+  total   total? @relation(fields: [totalId], references: [id])
+  totalId Int?
+
+  @@index([totalId])
+}
+
+model lockedBalance {
   id      Int    @id @default(autoincrement())
   memo    String @default("")
   price   Int
