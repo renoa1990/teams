@@ -24,6 +24,7 @@ import { formatAmount, toDateInputValue } from "@/lib/format";
 import AmountField from "@/components/settlement/AmountField";
 import FieldSection from "@/components/settlement/FieldSection";
 import LineItemRow from "@/components/settlement/LineItemRow";
+import { sectionTone, type SectionTone } from "@/lib/sectionColors";
 
 type SettlementFormProps = {
   mode: "create" | "edit";
@@ -243,18 +244,28 @@ export default function SettlementForm({
   };
 
   return (
-    <Box sx={{ width: "100%", mt: { xs: 2, md: 3 }, pb: 6 }}>
-      <Grid container spacing={4}>
+    <Box sx={{ width: "100%", mt: { xs: 1.5, md: 2 }, pb: 4 }}>
+      <Grid container spacing={2.5}>
         <Grid size={{ xs: 12, md: 7 }}>
-          <Paper variant="outlined" sx={{ px: { xs: 2, sm: 3 }, py: 1 }}>
-            <FieldSection title="정산 날짜">
+          <Paper variant="outlined" sx={{ p: { xs: 1, sm: 1.25 } }}>
+            <FieldSection title="정산 날짜" tone={sectionTone.date}>
               <DatePicker
                 disabled={mode === "edit"}
                 onChange={(newDate) => setDate(newDate)}
                 slotProps={{
                   textField: {
                     fullWidth: true,
-                    sx: { "& input": { fontWeight: 700 } },
+                    size: "small",
+                    sx: {
+                      maxWidth: 280,
+                      "& input": { fontWeight: 700 },
+                      "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                        borderColor: sectionTone.date.main,
+                      },
+                      "& .MuiInputLabel-root.Mui-focused": {
+                        color: sectionTone.date.main,
+                      },
+                    },
                   },
                 }}
                 value={date}
@@ -264,6 +275,7 @@ export default function SettlementForm({
 
             <FieldSection
               title="잠긴잔고"
+              tone={sectionTone.locked}
               hint={
                 mode === "create"
                   ? "이전 정산의 잠긴잔고가 미리 들어갑니다. 수정하거나 줄을 더 넣을 수 있습니다."
@@ -271,6 +283,7 @@ export default function SettlementForm({
               }
             >
               <LineItemRow
+                tone={sectionTone.locked}
                 memo={lockedMemo}
                 amount={lockedMoney}
                 onMemoChange={setLockedMemo}
@@ -282,9 +295,11 @@ export default function SettlementForm({
 
             <FieldSection
               title="현 잔고"
+              tone={sectionTone.balance}
               hint="가상, 뒷장 등을 나눠 입력하면 오른쪽에서 합산됩니다. Enter로도 넣을 수 있습니다."
             >
               <LineItemRow
+                tone={sectionTone.balance}
                 memo={moneyMemo}
                 amount={money}
                 onMemoChange={setMoneyMemo}
@@ -296,69 +311,37 @@ export default function SettlementForm({
 
             <FieldSection
               title="입출손익"
+              tone={sectionTone.solution}
               hint="솔루션상 당일 입출 손익입니다. 음수는 - 입력 후 금액을 넣으세요."
             >
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: {
-                    xs: "1fr",
-                    sm: "minmax(0, 1fr) 96px",
-                  },
-                  gap: 1.25,
-                }}
-              >
-                <AmountField
-                  value={total}
-                  onValueChange={setTotal}
-                  onEnter={() => inputTotal(total)}
-                  sx={{ width: "100%" }}
-                />
-                <Button
-                  variant="contained"
-                  onClick={() => inputTotal(total)}
-                  sx={{ minHeight: { xs: 48, sm: 56 }, fontWeight: 700 }}
-                >
-                  입력
-                </Button>
-              </Box>
+              <AmountActionRow
+                tone={sectionTone.solution}
+                value={total}
+                onValueChange={setTotal}
+                onSubmit={() => inputTotal(total)}
+              />
             </FieldSection>
 
             <FieldSection
               title="유저보유"
+              tone={sectionTone.holdings}
               hint="기록용입니다. 오차·잔고 합계에는 반영되지 않습니다."
             >
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: {
-                    xs: "1fr",
-                    sm: "minmax(0, 1fr) 96px",
-                  },
-                  gap: 1.25,
-                }}
-              >
-                <AmountField
-                  value={holdingsDraft}
-                  onValueChange={setHoldingsDraft}
-                  onEnter={() => inputHoldings(holdingsDraft)}
-                  sx={{ width: "100%" }}
-                />
-                <Button
-                  variant="contained"
-                  onClick={() => inputHoldings(holdingsDraft)}
-                  sx={{ minHeight: { xs: 48, sm: 56 }, fontWeight: 700 }}
-                >
-                  입력
-                </Button>
-              </Box>
+              <AmountActionRow
+                tone={sectionTone.holdings}
+                value={holdingsDraft}
+                onValueChange={setHoldingsDraft}
+                onSubmit={() => inputHoldings(holdingsDraft)}
+              />
             </FieldSection>
 
             <FieldSection
               title="지출내역"
+              tone={sectionTone.withdraw}
               hint="이전 내역에서 고르거나 새로 입력하세요. 같은 이름으로 넣어야 정산확인에서 검색됩니다."
             >
               <LineItemRow
+                tone={sectionTone.withdraw}
                 memo={withdrawMemo}
                 amount={withdraw}
                 onMemoChange={setWithdrawMemo}
@@ -369,8 +352,13 @@ export default function SettlementForm({
               />
             </FieldSection>
 
-            <FieldSection title="입금내역" hint="내역과 금액을 함께 입력하세요.">
+            <FieldSection
+              title="입금내역"
+              tone={sectionTone.deposit}
+              hint="내역과 금액을 함께 입력하세요."
+            >
               <LineItemRow
+                tone={sectionTone.deposit}
                 memo={depositMemo}
                 amount={deposit}
                 onMemoChange={setDepositMemo}
@@ -386,20 +374,23 @@ export default function SettlementForm({
         <Grid size={{ xs: 12, md: 5 }}>
           <Box sx={{ position: { md: "sticky" }, top: 24 }}>
             <TableContainer component={Paper} variant="outlined">
-              <Table aria-label="settlement summary" size="medium">
+              <Table aria-label="settlement summary" size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell width="54%" sx={{ backgroundColor: "#f5f5f5", py: 1.5 }}>
-                      <Typography color="primary" sx={{ fontWeight: 700 }}>
+                    <TableCell
+                      width="54%"
+                      sx={{ backgroundColor: sectionTone.yesterday.bg, py: 1 }}
+                    >
+                      <Typography sx={{ fontWeight: 800, fontSize: 13, color: sectionTone.yesterday.main }}>
                         전일 잔고
                       </Typography>
                     </TableCell>
                     <TableCell
                       width="46%"
-                      sx={{ backgroundColor: "#f5f5f5", py: 1.5 }}
+                      sx={{ backgroundColor: sectionTone.yesterday.bg, py: 1 }}
                       align="right"
                     >
-                      <Typography color="primary" sx={{ fontWeight: 700 }}>
+                      <Typography sx={{ fontWeight: 800, fontSize: 13, color: sectionTone.yesterday.main }}>
                         {formatAmount(yesterdayTotal)}
                       </Typography>
                     </TableCell>
@@ -409,6 +400,7 @@ export default function SettlementForm({
                   {lockedReceipt.map((item, index) => (
                     <SummaryRow
                       key={`locked-${index}`}
+                      tone={sectionTone.locked}
                       label={`잠긴잔고${index + 1}. ${item.memo}`}
                       amount={item.price}
                       onRemove={() =>
@@ -421,6 +413,7 @@ export default function SettlementForm({
                   {balanceReceipt.map((item, index) => (
                     <SummaryRow
                       key={`balance-${index}`}
+                      tone={sectionTone.balance}
                       label={`현잔고${index + 1}. ${item.memo}`}
                       amount={item.price}
                       onRemove={() =>
@@ -430,8 +423,14 @@ export default function SettlementForm({
                       }
                     />
                   ))}
-                  <SummaryRow label="현 잔고 합계" amount={todayTotal} emphasize />
                   <SummaryRow
+                    tone={sectionTone.total}
+                    label="현 잔고 합계"
+                    amount={todayTotal}
+                    strong
+                  />
+                  <SummaryRow
+                    tone={sectionTone.solution}
                     label="입출손익"
                     amount={confirmTotal.price}
                     onRemove={
@@ -442,6 +441,7 @@ export default function SettlementForm({
                   />
                   {userHoldings.memo ? (
                     <SummaryRow
+                      tone={sectionTone.holdings}
                       label="유저보유"
                       amount={userHoldings.price}
                       onRemove={() => setUserHoldings({ memo: "", price: 0 })}
@@ -450,6 +450,7 @@ export default function SettlementForm({
                   {withdrawReceipt.map((item, index) => (
                     <SummaryRow
                       key={`withdraw-${index}`}
+                      tone={sectionTone.withdraw}
                       label={`출금${index + 1}. ${item.memo}`}
                       amount={item.price}
                       onRemove={() =>
@@ -462,6 +463,7 @@ export default function SettlementForm({
                   {depositReceipt.map((item, index) => (
                     <SummaryRow
                       key={`deposit-${index}`}
+                      tone={sectionTone.deposit}
                       label={`입금${index + 1}. ${item.memo}`}
                       amount={item.price}
                       onRemove={() =>
@@ -471,11 +473,17 @@ export default function SettlementForm({
                       }
                     />
                   ))}
-                  <SummaryRow label="오차" amount={marginTotal} strong />
+                  <SummaryRow
+                    tone={sectionTone.margin}
+                    label="오차"
+                    amount={marginTotal}
+                    strong
+                    danger={marginTotal < 0}
+                  />
                 </TableBody>
               </Table>
             </TableContainer>
-            <Typography color="text.secondary" align="right" sx={{ fontSize: 13, m: 1.5 }}>
+            <Typography color="text.secondary" align="right" sx={{ fontSize: 12, m: 1 }}>
               ※ 금액이 - 인 경우 정산금액보다 부족함
             </Typography>
             <Button
@@ -483,7 +491,7 @@ export default function SettlementForm({
               variant="contained"
               onClick={onSubmit}
               disabled={pending}
-              sx={{ fontWeight: 700, py: 1.5 }}
+              sx={{ fontWeight: 700, py: 1 }}
             >
               {mode === "create" ? "정산완료" : "수정하기"}
             </Button>
@@ -493,7 +501,7 @@ export default function SettlementForm({
                 variant="contained"
                 onClick={onDelete}
                 disabled={pending}
-                sx={{ mt: 1.25, fontWeight: 700, py: 1.5 }}
+                sx={{ mt: 1, fontWeight: 700, py: 1 }}
                 color="error"
               >
                 삭제
@@ -506,30 +514,98 @@ export default function SettlementForm({
   );
 }
 
+function AmountActionRow({
+  tone,
+  value,
+  onValueChange,
+  onSubmit,
+}: {
+  tone: SectionTone;
+  value: number | undefined;
+  onValueChange: (value: number | undefined) => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "minmax(0, 1fr) 64px",
+          sm: "160px 64px",
+        },
+        gap: 1,
+        maxWidth: 240,
+      }}
+    >
+      <AmountField
+        value={value}
+        onValueChange={onValueChange}
+        onEnter={onSubmit}
+        sx={{
+          width: "100%",
+          "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: tone.main,
+          },
+          "& .MuiInputLabel-root.Mui-focused": {
+            color: tone.main,
+          },
+        }}
+      />
+      <Button
+        size="small"
+        variant="contained"
+        onClick={onSubmit}
+        sx={{
+          minHeight: 40,
+          minWidth: 0,
+          px: 1,
+          fontWeight: 700,
+          fontSize: 13,
+          bgcolor: tone.main,
+          "&:hover": {
+            bgcolor: tone.main,
+            filter: "brightness(0.92)",
+          },
+        }}
+      >
+        입력
+      </Button>
+    </Box>
+  );
+}
+
 function SummaryRow({
   label,
   amount,
   onRemove,
-  emphasize,
+  tone,
   strong,
+  danger,
 }: {
   label: string;
   amount: number;
   onRemove?: () => void;
-  emphasize?: boolean;
+  tone?: SectionTone;
   strong?: boolean;
+  danger?: boolean;
 }) {
+  const color = danger ? "#b91c1c" : tone?.main;
+
   return (
-    <TableRow>
-      <TableCell sx={{ py: 1.25 }}>
+    <TableRow sx={{ backgroundColor: tone?.bg }}>
+      <TableCell
+        sx={{
+          py: 0.75,
+          borderLeft: tone ? `4px solid ${tone.main}` : undefined,
+        }}
+      >
         <Typography
-          color={emphasize || amount < 0 ? "error" : undefined}
-          sx={{ fontWeight: 700, fontSize: strong ? 16 : 14 }}
+          sx={{ fontWeight: 800, fontSize: strong ? 14 : 13, color }}
         >
           {label}
         </Typography>
       </TableCell>
-      <TableCell sx={{ py: 1.25 }}>
+      <TableCell sx={{ py: 0.75 }}>
         <Box
           sx={{
             display: "flex",
@@ -539,8 +615,7 @@ function SummaryRow({
           }}
         >
           <Typography
-            color={emphasize || amount < 0 ? "error" : undefined}
-            sx={{ fontWeight: 700, fontSize: strong ? 16 : 14 }}
+            sx={{ fontWeight: 800, fontSize: strong ? 14 : 13, color }}
           >
             {formatAmount(amount)}
           </Typography>

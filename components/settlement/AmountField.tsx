@@ -40,6 +40,7 @@ export default function AmountField({
           style: { textAlign: "right", fontWeight: 600 },
         },
       }}
+      size="small"
       sx={sx}
     />
   );
