@@ -136,7 +136,7 @@ export default function SettlementForm({
 
   const addReceipt = (type: "locked" | "balance" | "withdraw" | "deposit") => {
     if (type === "locked") {
-      if (!lockedMoney || !lockedMemo) return;
+      if (lockedMoney === undefined || !lockedMemo) return;
       setLockedReceipt((current) => [
         ...current,
         { memo: lockedMemo, price: lockedMoney },
@@ -147,7 +147,7 @@ export default function SettlementForm({
     }
 
     if (type === "balance") {
-      if (!money || !moneyMemo) return;
+      if (money === undefined || !moneyMemo) return;
       setBalanceReceipt((current) => [
         ...current,
         { memo: moneyMemo, price: money },
@@ -158,7 +158,7 @@ export default function SettlementForm({
     }
 
     if (type === "withdraw") {
-      if (!withdraw || !withdrawMemo) return;
+      if (withdraw === undefined || !withdrawMemo) return;
       setWithdrawReceipt((current) => [
         ...current,
         { memo: withdrawMemo, price: withdraw * -1 },
@@ -171,7 +171,7 @@ export default function SettlementForm({
       return;
     }
 
-    if (!deposit || !depositMemo) return;
+    if (deposit === undefined || !depositMemo) return;
     setDepositReceipt((current) => [
       ...current,
       { memo: depositMemo, price: deposit },
@@ -196,7 +196,6 @@ export default function SettlementForm({
         mode === "create" && date
           ? await createSettlement({
               date: toDateInputValue(date),
-              yesterdayTotal,
               solutionTotal: confirmTotal.price,
               userHoldings: userHoldings.memo ? userHoldings.price : 0,
               balance: balanceReceipt,

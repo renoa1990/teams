@@ -1,5 +1,4 @@
-import { format } from "date-fns";
-import { formatAmount } from "@/lib/format";
+import { formatAmount, formatSeoulMonthDay } from "@/lib/format";
 
 const DIVIDER = "-----------------------------------";
 
@@ -56,7 +55,7 @@ export function formatSettlementReport(item: SettlementReportInput) {
   const currentTotal = sumPrices(currentItems);
 
   return [
-    `[${format(new Date(item.totalAt), "M월 d일")} 지출 및 현재잔고]`,
+    `[${formatSeoulMonthDay(item.totalAt)} 지출 및 현재잔고]`,
     "",
     `전일 잔고 : ${formatAmount(item.yesterDayTotal)}`,
     "",

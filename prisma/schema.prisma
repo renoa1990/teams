@@ -28,6 +28,8 @@ model total {
   balance        balance[]
   lockedBalance  lockedBalance[]
   confirm        Boolean    @default(false)
+
+  @@unique([site, totalAt])
 }
 
 model withdraw {

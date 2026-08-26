@@ -59,7 +59,7 @@ const theme = responsiveFontSizes(
     },
     shadows: shadows as unknown as Shadows,
     typography: {
-      fontFamily: '"Inter", sans-serif',
+      fontFamily: 'var(--font-noto-sans-kr), "Noto Sans KR", sans-serif',
       button: {
         textTransform: "none",
         fontWeight: 500,

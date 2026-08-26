@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { isAdmin } from "@/lib/roles";
 import { calcMarginTotal, sumReceipts, type ReceiptItem } from "@/lib/calc";
 import {
+  isFutureSettlementDate,
   isSameSettlementDay,
   parseSettlementDate,
 } from "@/lib/format";
@@ -31,6 +32,15 @@ function sanitizeAmount(value: unknown) {
   return Number.isFinite(amount) ? Math.trunc(amount) : 0;
 }
 
+function isUniqueConflict(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "P2002"
+  );
+}
+
 function revalidateSettlementPages() {
   revalidatePath("/input");
   revalidatePath("/result");
@@ -39,7 +49,6 @@ function revalidateSettlementPages() {
 
 export async function createSettlement(input: {
   date: string;
-  yesterdayTotal: number;
   solutionTotal: number;
   userHoldings: number;
   balance: ReceiptItem[];
@@ -49,7 +58,7 @@ export async function createSettlement(input: {
 }): Promise<ActionResult> {
   await requireUser();
 
-  const { date, yesterdayTotal, solutionTotal } = input;
+  const { date, solutionTotal } = input;
   const userHoldings = sanitizeAmount(input.userHoldings);
   const balance = sanitizeReceipts(input.balance);
   const lockedBalance = sanitizeReceipts(input.lockedBalance);
@@ -65,10 +74,26 @@ export async function createSettlement(input: {
     return { ok: false, message: "입력값을 확인하세요" };
   }
   const dateData = parseSettlementDate(date);
-  const now = new Date();
 
-  if (now.getTime() < dateData.getTime()) {
+  if (isFutureSettlementDate(dateData)) {
     return { ok: false, message: "미리 정산처리할수 없습니다." };
+  }
+
+  const last = await prisma.total.findFirst({
+    where: { site: SITE },
+    orderBy: { totalAt: "desc" },
+    select: {
+      todayTotal: true,
+      confirm: true,
+      totalAt: true,
+    },
+  });
+
+  if (last && !last.confirm) {
+    return {
+      ok: false,
+      message: "완료되지 않은 정산이 있습니다. 지난 정산을 확정 후 입력하세요",
+    };
   }
 
   const laterOrSame = await prisma.total.findFirst({
@@ -86,6 +111,7 @@ export async function createSettlement(input: {
     return { ok: false, message: "선택한 날짜 이후 완료된 정산이 있습니다" };
   }
 
+  const yesterdayTotal = last?.todayTotal ?? 0;
   const marginTotla = calcMarginTotal({
     yesterdayTotal,
     todayTotal,
@@ -94,34 +120,41 @@ export async function createSettlement(input: {
     deposit,
   });
 
-  await prisma.total.create({
-    data: {
-      site: SITE,
-      yesterDayTotal: Math.trunc(yesterdayTotal),
-      todayTotal: Math.trunc(todayTotal),
-      solutionTotal: Math.trunc(solutionTotal),
-      userHoldings,
-      marginTotla,
-      createAt: new Date(),
-      totalAt: dateData,
-      withdraw:
-        withdraw.length > 0
-          ? { createMany: { data: withdraw } }
-          : undefined,
-      deposit:
-        deposit.length > 0
-          ? { createMany: { data: deposit } }
-          : undefined,
-      balance:
-        balance.length > 0
-          ? { createMany: { data: balance } }
-          : undefined,
-      lockedBalance:
-        lockedBalance.length > 0
-          ? { createMany: { data: lockedBalance } }
-          : undefined,
-    },
-  });
+  try {
+    await prisma.total.create({
+      data: {
+        site: SITE,
+        yesterDayTotal: Math.trunc(yesterdayTotal),
+        todayTotal: Math.trunc(todayTotal),
+        solutionTotal: Math.trunc(solutionTotal),
+        userHoldings,
+        marginTotla,
+        createAt: new Date(),
+        totalAt: dateData,
+        withdraw:
+          withdraw.length > 0
+            ? { createMany: { data: withdraw } }
+            : undefined,
+        deposit:
+          deposit.length > 0
+            ? { createMany: { data: deposit } }
+            : undefined,
+        balance:
+          balance.length > 0
+            ? { createMany: { data: balance } }
+            : undefined,
+        lockedBalance:
+          lockedBalance.length > 0
+            ? { createMany: { data: lockedBalance } }
+            : undefined,
+      },
+    });
+  } catch (error) {
+    if (isUniqueConflict(error)) {
+      return { ok: false, message: "해당 날짜에 이미 완료된 정산이 있습니다." };
+    }
+    throw error;
+  }
 
   revalidateSettlementPages();
   return { ok: true };
@@ -146,6 +179,10 @@ export async function updateSettlement(input: {
     return { ok: false, message: "저장에 실패했습니다" };
   }
 
+  if (existing.confirm) {
+    return { ok: false, message: "확정된 정산은 수정할 수 없습니다" };
+  }
+
   const userHoldings = sanitizeAmount(input.userHoldings);
   const balance = sanitizeReceipts(input.balance);
   const lockedBalance = sanitizeReceipts(input.lockedBalance);
@@ -165,40 +202,36 @@ export async function updateSettlement(input: {
     deposit,
   });
 
-  await prisma.total.update({
-    where: { id: input.id },
-    data: {
-      withdraw: { deleteMany: {} },
-      deposit: { deleteMany: {} },
-      balance: { deleteMany: {} },
-      lockedBalance: { deleteMany: {} },
-    },
-  });
-
-  await prisma.total.update({
-    where: { id: input.id },
-    data: {
-      todayTotal: Math.trunc(todayTotal),
-      solutionTotal: Math.trunc(input.solutionTotal),
-      userHoldings,
-      marginTotla,
-      withdraw:
-        withdraw.length > 0
-          ? { createMany: { data: withdraw } }
-          : undefined,
-      deposit:
-        deposit.length > 0
-          ? { createMany: { data: deposit } }
-          : undefined,
-      balance:
-        balance.length > 0
-          ? { createMany: { data: balance } }
-          : undefined,
-      lockedBalance:
-        lockedBalance.length > 0
-          ? { createMany: { data: lockedBalance } }
-          : undefined,
-    },
+  await prisma.$transaction(async (tx) => {
+    await tx.withdraw.deleteMany({ where: { totalId: input.id } });
+    await tx.deposit.deleteMany({ where: { totalId: input.id } });
+    await tx.balance.deleteMany({ where: { totalId: input.id } });
+    await tx.lockedBalance.deleteMany({ where: { totalId: input.id } });
+    await tx.total.update({
+      where: { id: input.id },
+      data: {
+        todayTotal: Math.trunc(todayTotal),
+        solutionTotal: Math.trunc(input.solutionTotal),
+        userHoldings,
+        marginTotla,
+        withdraw:
+          withdraw.length > 0
+            ? { createMany: { data: withdraw } }
+            : undefined,
+        deposit:
+          deposit.length > 0
+            ? { createMany: { data: deposit } }
+            : undefined,
+        balance:
+          balance.length > 0
+            ? { createMany: { data: balance } }
+            : undefined,
+        lockedBalance:
+          lockedBalance.length > 0
+            ? { createMany: { data: lockedBalance } }
+            : undefined,
+      },
+    });
   });
 
   revalidateSettlementPages();
@@ -217,18 +250,16 @@ export async function deleteSettlement(id: number): Promise<ActionResult> {
     return { ok: false, message: "삭제에 실패했습니다" };
   }
 
-  await prisma.total.update({
-    where: { id },
-    data: {
-      withdraw: { deleteMany: {} },
-      deposit: { deleteMany: {} },
-      balance: { deleteMany: {} },
-      lockedBalance: { deleteMany: {} },
-    },
-  });
+  if (existing.confirm) {
+    return { ok: false, message: "확정된 정산은 삭제할 수 없습니다" };
+  }
 
-  await prisma.total.delete({
-    where: { id },
+  await prisma.$transaction(async (tx) => {
+    await tx.withdraw.deleteMany({ where: { totalId: id } });
+    await tx.deposit.deleteMany({ where: { totalId: id } });
+    await tx.balance.deleteMany({ where: { totalId: id } });
+    await tx.lockedBalance.deleteMany({ where: { totalId: id } });
+    await tx.total.delete({ where: { id } });
   });
 
   revalidateSettlementPages();
